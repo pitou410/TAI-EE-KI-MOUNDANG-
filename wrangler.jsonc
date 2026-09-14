@@ -1,16 +1,15 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tai-ee-ki-moundangs",
   "main": "index.js",
-  "compatibility_date": "2026-09-09",
+  "compatibility_date": "2024-01-01",
   "assets": {
     "directory": "./",
-    "binding": "ASSETS"
+    "not_found_handling": "single-page-application"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "tai-ee-ki-moundang-db",
+      "database_name": "tai-ee-ki-moundangs-db",
       "database_id": "2d76c33c-c2ac-434c-b3c0-e62fb4e365f7"
     }
   ]
