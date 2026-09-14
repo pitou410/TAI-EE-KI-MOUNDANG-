@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tai-ee-ki-moundang",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-09",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": []
+}

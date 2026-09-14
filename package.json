@@ -1,0 +1,14 @@
+{
+  "name": "tai-ee-ki-moundang-cloudflare",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create tai-ee-ki-moundang-db",
+    "db:migrate": "wrangler d1 execute tai-ee-ki-moundang-db --remote --file=migrations/0001_initial.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.44.0"
+  }
+}

@@ -1,0 +1,13 @@
+TAI EE KI MOUNDANG — VERSION DE PRODUCTION
+
+Cette version est destinée à la mise en ligne sur Cloudflare Workers + D1 après validation finale du client.
+
+Ne pas ouvrir les fichiers HTML directement pour tester l’administration : l’espace d’administration fonctionne avec le Worker et la base D1 une fois déployés.
+
+Avant mise en ligne :
+- créer/configurer la base D1 ;
+- appliquer migrations/0001_initial.sql ;
+- lier la base au Worker avec la variable DB ;
+- définir les secrets ADMIN_PASSWORD et SESSION_SECRET ;
+- tester le site public et /admin ;
+- connecter le domaine final.
