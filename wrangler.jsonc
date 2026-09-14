@@ -6,5 +6,12 @@
   "assets": {
     "directory": "./",
     "binding": "ASSETS"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tai-ee-ki-moundang-db",
+      "database_id": "2d76c33c-c2ac-434c-b3c0-e62fb4e365f7"
+    }
+  ]
 }
