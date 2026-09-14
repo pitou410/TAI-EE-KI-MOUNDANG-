@@ -1,9 +1,10 @@
 const jsonResponse = (data, status = 200, extraHeaders = {}) => {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", ...extraHeaders }
+    headers: { "Content-Type": "application/json",...extraHeaders }
   });
-};const DEFAULT_MAX_TEXT = 3000;
+};
+const DEFAULT_MAX_TEXT = 3000;
 const DEFAULTS = {
   site_name:'TAI EE KI Moundang', city:'Bonabéri / Douala, Cameroun', phone:'+237 675 19 82 09', whatsapp:'+237675198209',
   hero_eyebrow:'BONABÉRI • DOUALA', hero_title:'Unis par nos origines,<br><span>forts par notre solidarité.</span>',
@@ -18,7 +19,7 @@ const SESSION_TTL = 8 * 60 * 60;
 const rate = new Map();
 const enc = new TextEncoder();
 const dec = new TextDecoder();
-function clean(v,max=DEFAULT_MAX_TEXT){return String(v ?? '').trim().slice(0,max)}
+function clean(v,max=DEFAULT_MAX_TEXT){return String(v?? '').trim().slice(0,max)}
 function json(data,status=200,headers={}){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...headers}})}
 function security(h){h.set('X-Content-Type-Options','nosniff');h.set('X-Frame-Options','SAMEORIGIN');h.set('Referrer-Policy','strict-origin-when-cross-origin');h.set('Permissions-Policy','geolocation=(),camera=(),microphone=()');h.set('Strict-Transport-Security','max-age=31536000; includeSubDomains');return h}
 function cookies(req){const out={};for(const p of (req.headers.get('Cookie')||'').split(';')){const i=p.indexOf('=');if(i>0)out[p.slice(0,i).trim()]=decodeURIComponent(p.slice(i+1).trim())}return out}
@@ -46,7 +47,7 @@ async function api(req,env,url){
   if(path==='/api/members'&&method==='POST'){
     const x=await body(req);if(!clean(x.nom,120)||!clean(x.telephone,40))return json({error:'Nom et téléphone sont requis.'},400);
     await exec(db,'INSERT INTO members(name,phone,area,activity,message) VALUES(?,?,?,?,?)',clean(x.nom,120),clean(x.telephone,40),clean(x.lieu,120),clean(x.profession,120),clean(x.message,1200));
-    return json({ok:true,message:'Votre demande a bien été enregistrée. Merci !'},201);
+    return json({ok:true,message:'Votre demande a bien été enregistrée. Merci!'},201);
   }
   if(path==='/api/admin/login'&&method==='POST'){
     const ip=req.headers.get('CF-Connecting-IP')||'unknown', now=Date.now(), a=rate.get(ip)||{n:0,until:0};
@@ -87,10 +88,37 @@ async function api(req,env,url){
   }
   return null;
 }
-export default { async fetch(request,env,ctx){
-  const h=security(new Headers());
-  const url=new URL(request.url);
-  if(url.pathname.startsWith('/api/')){try{const r=await api(request,env,url);if(r){const hh=new Headers(r.headers);security(hh);return new Response(r.body,{status:r.status,headers:hh})}return json({error:'Route introuvable'},404)}catch(e){console.error(e);return jsonResponse({ error: 'VRAIE ERREUR: ' + e.message }, 500);}}
-  const res=await if (env.ASSETS && env.ASSETS.fetch) { return env.ASSETS.fetch(request); }
-return new Response("Not found", {status: 404});const headers=new Headers(res.headers);security(headers);return new Response(res.body,{status:res.status,statusText:res.statusText,headers});
-}};
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/')) {
+      try {
+        const r = await api(request, env, url);
+        if (r) {
+          const hh = new Headers(r.headers);
+          security(hh);
+          return new Response(r.body, { status: r.status, headers: hh });
+        }
+        return json({ error: 'Route introuvable' }, 404);
+      } catch (e) {
+        console.error(e);
+        if (e.message === 'UNAUTHORIZED') return json({ error: 'Non autorisé' }, 401);
+        return jsonResponse({ error: 'VRAIE ERREUR: ' + e.message }, 500);
+      }
+    }
+
+    // Partie site public - assets
+    try {
+      if (env.ASSETS && env.ASSETS.fetch) {
+        const res = await env.ASSETS.fetch(request);
+        const headers = new Headers(res.headers);
+        security(headers);
+        return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+      }
+    } catch (e) {
+      console.error("ASSETS error", e);
+    }
+    return new Response("Not found", { status: 404 });
+  }
+};
