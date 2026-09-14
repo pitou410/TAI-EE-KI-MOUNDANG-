@@ -85,6 +85,6 @@ async function api(req,env,url){
 export default { async fetch(request,env,ctx){
   const h=security(new Headers());
   const url=new URL(request.url);
-  if(url.pathname.startsWith('/api/')){try{const r=await api(request,env,url);if(r){const hh=new Headers(r.headers);security(hh);return new Response(r.body,{status:r.status,headers:hh})}return json({error:'Route introuvable'},404)}catch(e){console.error(e);return json({error:'Erreur serveur.'},500)}}
+  if(url.pathname.startsWith('/api/')){try{const r=await api(request,env,url);if(r){const hh=new Headers(r.headers);security(hh);return new Response(r.body,{status:r.status,headers:hh})}return json({error:'Route introuvable'},404)}catch(e){console.error(e);return jsonResponse({ error: 'VRAIE ERREUR: ' + e.message }, 500);}}
   const res=await env.ASSETS.fetch(request);const headers=new Headers(res.headers);security(headers);return new Response(res.body,{status:res.status,statusText:res.statusText,headers});
 }};
