@@ -35,7 +35,11 @@ async function all(db,sql,...args){const r=await db.prepare(sql).bind(...args).a
 async function first(db,sql,...args){return await db.prepare(sql).bind(...args).first()}
 async function exec(db,sql,...args){return db.prepare(sql).bind(...args).run()}
 async function getSettings(db){const rows=await all(db,'SELECT key,value FROM settings');return Object.fromEntries(rows.map(r=>[r.key,r.value]))}
-async function requireAuth(req,env){const c=cookies(req);if(!(await verifySession(env.SESSION_SECRET,c.session)))throw new Error('UNAUTHORIZED')}
+async function requireAuth(req,env){
+  if(env.ADMIN_SETUP_MODE === 'true') return;
+  const c=cookies(req);
+  if(!(await verifySession(env.SESSION_SECRET,c.session)))throw new Error('UNAUTHORIZED');
+}
 async function initAdmin(env){const row=await first(env.DB,'SELECT id FROM admin WHERE id=1');if(!row){if(!env.ADMIN_PASSWORD)throw new Error('ADMIN_PASSWORD secret is missing');const p=await hashPassword(env.ADMIN_PASSWORD);await exec(env.DB,'INSERT INTO admin(id,password_hash,salt) VALUES(1,?,?)',p.hash,p.salt)}}
 async function api(req,env,url){
   const db=env.DB; const method=req.method; const path=url.pathname;
