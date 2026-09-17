@@ -18,7 +18,34 @@ async function api(url,opt={}){const r=await fetch(url,{...opt,headers:{'Content
 $$('.tabs button').forEach(b=>b.onclick=()=>{$$('.tabs button').forEach(x=>x.classList.remove('active'));$$('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
 async function check(){try{await api('/api/admin/me');show()}catch{}}
 function show(){$('#login').classList.add('hidden');$('#dashboard').classList.remove('hidden');$('#logout').classList.remove('hidden');loadAll()}
-$('#loginForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('#password').value})});show()}catch(x){$('#loginMsg').textContent=x.message}}
+$('#loginForm').onsubmit=async e=>{
+  e.preventDefault();
+  $('#loginMsg').textContent='';
+
+  try{
+    const result=await api('/api/admin/login',{
+      method:'POST',
+      body:JSON.stringify({password:$('#password').value})
+    });
+
+    if(result.diagnostic){
+      $('#loginMsg').textContent=
+        'DIAGNOSTIC : '+
+        'adminExists='+result.adminExists+
+        ' | secretPresent='+result.secretPresent+
+        ' | suppliedEqualsSecret='+result.suppliedEqualsSecret+
+        ' | hashMatches='+result.hashMatches+
+        ' | secretMatchesHash='+result.secretMatchesHash+
+        ' | hashLength='+result.hashLength+
+        ' | saltLength='+result.saltLength;
+      return;
+    }
+
+    show();
+  }catch(x){
+    $('#loginMsg').textContent=x.message
+  }
+                                                        }
 $('#logout').onclick=async()=>{await api('/api/admin/logout',{method:'POST'});location.reload()}
 async function loadAll(){await Promise.all([loadSettings(),loadMembers(),loadEvents(),loadMeetings(),loadBureau(),loadGallery()]);}
 async function loadSettings(){const s=await api('/api/admin/settings');for(const [k,v] of Object.entries(s)){const e=$(`[name="${k}"]`);if(e)e.value=v}if(s.logo){$('#logoPreview').src=s.logo;$('#logoPreview').classList.remove('hidden')}}
