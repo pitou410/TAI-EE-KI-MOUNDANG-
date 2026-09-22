@@ -58,51 +58,42 @@ async function api(req,env,url){
   const now=Date.now();
   const a=rate.get(ip)||{n:0,until:0};
 
-  if(a.until>now)
+  if(a.until>now){
     return json({error:'Trop de tentatives. Réessayez dans quelques minutes.'},429);
-
-  await initAdmin(env);
-
-  const x=await body(req);
-  const supplied=clean(x.password,200);
-  const row=await first(db,'SELECT * FROM admin WHERE id=1');
-
-  if(env.ADMIN_SETUP_MODE==='true'){
-    const secretPresent=typeof env.ADMIN_PASSWORD==='string' && env.ADMIN_PASSWORD.length>0;
-    const suppliedEqualsSecret=secretPresent && supplied===env.ADMIN_PASSWORD;
-    const hashMatches=!!row && await verifyPassword(supplied,row);
-    const secretMatchesHash=!!row && secretPresent && await verifyPassword(env.ADMIN_PASSWORD,row);
-
-    return json({
-      diagnostic:true,
-      adminExists:!!row,
-      adminId:row?.id??null,
-      secretPresent,
-      suppliedEqualsSecret,
-      hashMatches,
-      secretMatchesHash,
-      hashLength:row?.password_hash?.length??0,
-      saltLength:row?.salt?.length??0
-    });
   }
 
-  if(!(await verifyPassword(supplied,row))){
+  const x=await body(req);
+  const password=clean(x.password,200);
+
+  if(!env.ADMIN_PASSWORD){
+    console.error('ADMIN_PASSWORD secret is missing');
+    return json({error:'Configuration du mot de passe indisponible.'},500);
+  }
+
+  if(password!==env.ADMIN_PASSWORD){
     a.n++;
+
     if(a.n>=5){
       a.n=0;
-      a.until=now+10*60*1000
+      a.until=now+10*60*1000;
     }
+
     rate.set(ip,a);
-    return json({error:'Mot de passe incorrect.'},401)
+    return json({error:'Mot de passe incorrect.'},401);
   }
 
   rate.delete(ip);
+
   const token=await signSession(env.SESSION_SECRET);
 
   return json(
     {ok:true},
     200,
-    {'Set-Cookie':`session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${SESSION_TTL}`}
+    {
+      'Set-Cookie':`session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${SESSION_TTL}`
+    }
+  );
+    }
   );
   }
   if(path==='/api/admin/logout'&&method==='POST'){await requireAuth(req,env);return json({ok:true},200,{'Set-Cookie':'session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0'})}
